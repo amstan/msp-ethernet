@@ -6,7 +6,7 @@ CXX = msp430-g++
 OBJDUMP = msp430-objdump
 SIZE = msp430-size
 MSPDEBUG = mspdebug
-CFLAGS = --std=c99 -O3 -Wall -mmcu=msp430f5510
+CFLAGS = --std=c99 -Os -Wall -mmcu=msp430f5510
 FET = rf2500
 GDB = msp430-gdb
 GDBTUI = $(GDB)tui
