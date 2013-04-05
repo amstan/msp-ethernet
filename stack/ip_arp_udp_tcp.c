@@ -17,10 +17,7 @@
  *
  * Chip type           : ATMEGA88/168/328/644 with ENC28J60
  *********************************************/
-#include <avr/io.h>
-// http://www.nongnu.org/avr-libc/changes-1.8.html:
 #define __PROG_TYPES_COMPAT__
-#include <avr/pgmspace.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -28,10 +25,6 @@
 #include "enc28j60.h"
 #include "ip_config.h"
 
-// I use them to debug stuff:
-#define LEDOFF PORTB|=(1<<PORTB1)
-#define LEDON PORTB&=~(1<<PORTB1)
-//
 static uint8_t macaddr[6];
 static uint8_t ipaddr[4]={0,0,0,0};
 static uint8_t seqnum=0xa; // my initial tcp sequence number
@@ -66,9 +59,9 @@ static uint16_t (*client_tcp_datafill_callback)(uint8_t);
 static uint8_t www_fd=0;
 static uint8_t browsertype=0; // 0 = get, 1 = post
 static void (*client_browser_callback)(uint16_t,uint16_t,uint16_t); // the fields are: uint16_t webstatuscode,uint16_t datapos,uint16_t len; datapos is start of http data and len the the length of that data
-static const prog_char *client_additionalheaderline;
+static const *client_additionalheaderline;
 static char *client_postval;
-static const prog_char *client_urlbuf;
+static const *client_urlbuf;
 static const char *client_urlbuf_var;
 static const char *client_hoststr;
 static uint8_t *bufptr=0; // ugly workaround for backward compatibility
@@ -97,14 +90,14 @@ static uint16_t info_data_len=0;
 #if defined (ALL_clients)
 static uint8_t ipnetmask[4]={255,255,255,255};
 static uint8_t ipid=0x2; // IP-identification, it works as well if you do not change it but it is better to fill the field, we count this number up and wrap.
-const char iphdr[] PROGMEM ={0x45,0,0,0x82,0,0,0x40,0,0x20}; // 0x82 is the total len on ip, 0x20 is ttl (time to live), the second 0,0 is IP-identification and may be changed.
+const char iphdr[]={0x45,0,0,0x82,0,0,0x40,0,0x20}; // 0x82 is the total len on ip, 0x20 is ttl (time to live), the second 0,0 is IP-identification and may be changed.
 #endif
 
 #define CLIENTMSS 750
 #define TCP_DATA_START ((uint16_t)TCP_SRC_PORT_H_P+(buf[TCP_HEADER_LEN_P]>>4)*4)
-const char arpreqhdr[] PROGMEM ={0,1,8,0,6,4,0,1};
+const char arpreqhdr[]={0,1,8,0,6,4,0,1};
 #ifdef NTP_client
-const char ntpreqhdr[] PROGMEM ={0xe3,0,4,0xfa,0,1,0,0,0,1};
+const char ntpreqhdr[]={0xe3,0,4,0xfa,0,1,0,0,0,1};
 #endif
 
 // The Ip checksum is calculated over the ip header only starting
@@ -176,6 +169,19 @@ void init_mac(uint8_t *mymac){
                 memcpy(macaddr,mymac,6);
         }
 }
+
+#if defined (ALL_clients)
+// fill buffer with a prog-mem string
+void fill_buf(uint8_t *buf,uint16_t len, const char *progmem_s)
+{
+        while (len){
+                *buf=*progmem_s;
+                buf++;
+                progmem_s++;
+                len--;
+        }
+}
+#endif 
 
 #if defined (ALL_clients)
 void client_ifconfig(uint8_t *ip,uint8_t *netmask)
@@ -402,23 +408,6 @@ uint16_t get_tcp_data_len(uint8_t *buf)
         return((uint16_t)i);
 }
 
-
-// fill in tcp data at position pos. pos=0 means start of
-// tcp data. Returns the position at which the string after
-// this string could be filled.
-uint16_t fill_tcp_data_p(uint8_t *buf,uint16_t pos, const prog_char *progmem_s)
-{
-        char c;
-        // fill in tcp data at position pos
-        //
-        // with no options the data starts after the checksum + 2 more bytes (urgent ptr)
-        while ((c = pgm_read_byte(progmem_s++))) {
-                buf[TCP_CHECKSUM_L_P+3+pos]=c;
-                pos++;
-        }
-        return(pos);
-}
-
 // fill a binary string of len data into the tcp packet
 uint16_t fill_tcp_data_len(uint8_t *buf,uint16_t pos, const uint8_t *s, uint8_t len)
 {
@@ -643,19 +632,6 @@ void www_server_reply(uint8_t *buf,uint16_t dlen)
 
 #endif // WWW_server
 
-#if defined (ALL_clients)
-// fill buffer with a prog-mem string
-void fill_buf_p(uint8_t *buf,uint16_t len, const prog_char *progmem_s)
-{
-        while (len){
-                *buf= pgm_read_byte(progmem_s);
-                buf++;
-                progmem_s++;
-                len--;
-        }
-}
-#endif 
-
 #ifdef PING_client
 // icmp echo, matchpat is a pattern that has to be sent back by the 
 // host answering the ping.
@@ -672,7 +648,7 @@ void client_icmp_request(uint8_t *buf,uint8_t *destip,uint8_t *dstmac)
         }
         buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
         buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-        fill_buf_p(&buf[IP_P],9,iphdr);
+        fill_buf(&buf[IP_P],9,iphdr);
         buf[IP_ID_L_P]=ipid; ipid++;
         buf[IP_TOTLEN_L_P]=0x54;
         buf[IP_PROTO_P]=IP_PROTO_ICMP_V;
@@ -725,7 +701,7 @@ void client_ntp_request(uint8_t *buf,uint8_t *ntpip,uint8_t srcport,uint8_t *dst
         }
         buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
         buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-        fill_buf_p(&buf[IP_P],9,iphdr);
+        fill_buf(&buf[IP_P],9,iphdr);
         buf[IP_ID_L_P]=ipid; ipid++;
         buf[IP_TOTLEN_L_P]=0x4c;
         buf[IP_PROTO_P]=IP_PROTO_UDP_V;
@@ -752,7 +728,7 @@ void client_ntp_request(uint8_t *buf,uint8_t *ntpip,uint8_t srcport,uint8_t *dst
                 buf[UDP_DATA_P+i]=0;
                 i++;
         }
-        fill_buf_p(&buf[UDP_DATA_P],10,ntpreqhdr);
+        fill_buf(&buf[UDP_DATA_P],10,ntpreqhdr);
         //
         ck=checksum(&buf[IP_SRC_P], 16 + 48,1);
         buf[UDP_CHECKSUM_H_P]=ck>>8;
@@ -798,7 +774,7 @@ void send_udp_prepare(uint8_t *buf,uint16_t sport, const uint8_t *dip, uint16_t 
         }
         buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
         buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-        fill_buf_p(&buf[IP_P],9,iphdr);
+        fill_buf(&buf[IP_P],9,iphdr);
         buf[IP_ID_L_P]=ipid; ipid++;
         // total length field in the IP header must be set:
         buf[IP_TOTLEN_H_P]=0;
@@ -882,7 +858,7 @@ void send_wol(uint8_t *buf,uint8_t *wolmac)
         }
         buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
         buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-        fill_buf_p(&buf[IP_P],9,iphdr);
+        fill_buf(&buf[IP_P],9,iphdr);
         buf[IP_ID_L_P]=ipid; ipid++;
         buf[IP_TOTLEN_L_P]=0x82; //  fixed len
         buf[IP_PROTO_P]=IP_PROTO_UDP_V; // wol uses udp
@@ -952,7 +928,7 @@ uint8_t gratutious_arp(uint8_t *buf)
         buf[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
         // arp request and reply are the same execept for
         // the opcode:
-        fill_buf_p(&buf[ETH_ARP_P],8,arpreqhdr); 
+        fill_buf(&buf[ETH_ARP_P],8,arpreqhdr); 
         //buf[ETH_ARP_OPCODE_L_P]=ETH_ARP_OPCODE_REPLY_L_V; // reply
         i=0;
         while(i<6){
@@ -989,7 +965,7 @@ void client_arp_whohas(uint8_t *buf,uint8_t *ip_we_search)
         }
         buf[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
         buf[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
-        fill_buf_p(&buf[ETH_ARP_P],8,arpreqhdr);
+        fill_buf(&buf[ETH_ARP_P],8,arpreqhdr);
         i=0;
         while(i<6){
                 buf[ETH_ARP_SRC_MAC_P +i]=macaddr[i];
@@ -1047,7 +1023,7 @@ void tcp_client_syn(uint8_t *buf,uint8_t srcport,uint16_t dstport)
         }
         buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
         buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
-        fill_buf_p(&buf[IP_P],9,iphdr);
+        fill_buf(&buf[IP_P],9,iphdr);
         buf[IP_TOTLEN_L_P]=44; // good for syn
         buf[IP_ID_L_P]=ipid; ipid++;
         buf[IP_PROTO_P]=IP_PROTO_TCP_V;
@@ -1170,32 +1146,32 @@ uint16_t www_client_internal_datafill_callback(uint8_t fd){
         if (fd==www_fd){
                 if (browsertype==0){
                         // GET
-                        len=fill_tcp_data_p(bufptr,0,PSTR("GET "));
-                        len=fill_tcp_data_p(bufptr,len,client_urlbuf);
+                        len=fill_tcp_data(bufptr,0,"GET ");
+                        len=fill_tcp_data(bufptr,len,client_urlbuf);
                         len=fill_tcp_data(bufptr,len,client_urlbuf_var);
                         // I would prefer http/1.0 but there is a funny
                         // bug in some apache webservers which causes
                         // them to send two packets (fragmented PDU)
                         // if we don't use HTTP/1.1 + Connection: close
-                        len=fill_tcp_data_p(bufptr,len,PSTR(" HTTP/1.1\r\nHost: "));
+                        len=fill_tcp_data(bufptr,len," HTTP/1.1\r\nHost: ");
                         len=fill_tcp_data(bufptr,len,client_hoststr);
-                        len=fill_tcp_data_p(bufptr,len,PSTR("\r\nUser-Agent: tgr/1.1\r\nAccept: text/html\r\nConnection: close\r\n\r\n"));
+                        len=fill_tcp_data(bufptr,len,"\r\nUser-Agent: tgr/1.1\r\nAccept: text/html\r\nConnection: close\r\n\r\n");
                 }else{
                         // POST
-                        len=fill_tcp_data_p(bufptr,0,PSTR("POST "));
-                        len=fill_tcp_data_p(bufptr,len,client_urlbuf);
+                        len=fill_tcp_data(bufptr,0,"POST ");
+                        len=fill_tcp_data(bufptr,len,client_urlbuf);
                         len=fill_tcp_data(bufptr,len,client_urlbuf_var);
-                        len=fill_tcp_data_p(bufptr,len,PSTR(" HTTP/1.1\r\nHost: "));
+                        len=fill_tcp_data(bufptr,len," HTTP/1.1\r\nHost: ");
                         len=fill_tcp_data(bufptr,len,client_hoststr);
                         if (client_additionalheaderline){
-                                len=fill_tcp_data_p(bufptr,len,PSTR("\r\n"));
-                                len=fill_tcp_data_p(bufptr,len,client_additionalheaderline);
+                                len=fill_tcp_data(bufptr,len,"\r\n");
+                                len=fill_tcp_data(bufptr,len,client_additionalheaderline);
                         }
-                        len=fill_tcp_data_p(bufptr,len,PSTR("\r\nUser-Agent: tgr/1.1\r\nAccept: */*\r\nConnection: close\r\n"));
-                        len=fill_tcp_data_p(bufptr,len,PSTR("Content-Length: "));
+                        len=fill_tcp_data(bufptr,len,"\r\nUser-Agent: tgr/1.1\r\nAccept: */*\r\nConnection: close\r\n");
+                        len=fill_tcp_data(bufptr,len,"Content-Length: ");
                         itoa(strlen(client_postval),strbuf,10);
                         len=fill_tcp_data(bufptr,len,strbuf);
-                        len=fill_tcp_data_p(bufptr,len,PSTR("\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n"));
+                        len=fill_tcp_data(bufptr,len,"\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n");
                         len=fill_tcp_data(bufptr,len,client_postval);
                 }
                 return(len);
@@ -1252,7 +1228,7 @@ uint8_t www_client_internal_result_callback(uint8_t fd, uint8_t statuscode, uint
 // The string buffers to which urlbuf_varpart and hoststr are pointing
 // must not be changed until the callback is executed.
 //
-void client_browse_url(const prog_char *urlbuf,const char *urlbuf_varpart,const char *hoststr,void (*callback)(uint16_t,uint16_t,uint16_t),uint8_t *dstip,uint8_t *dstmac)
+void client_browse_url(const *urlbuf,const char *urlbuf_varpart,const char *hoststr,void (*callback)(uint16_t,uint16_t,uint16_t),uint8_t *dstip,uint8_t *dstmac)
 {
         if (!enc28j60linkup())return;
         client_urlbuf=urlbuf;
@@ -1270,7 +1246,7 @@ void client_browse_url(const prog_char *urlbuf,const char *urlbuf_varpart,const 
 // postval is a string buffer which can only be de-allocated by the caller 
 // when the post operation was really done (e.g when callback was executed).
 // postval must be urlencoded.
-void client_http_post(const prog_char *urlbuf, const char *urlbuf_varpart,const char *hoststr, const prog_char *additionalheaderline,char *postval,void (*callback)(uint16_t,uint16_t,uint16_t),uint8_t *dstip,uint8_t *dstmac)
+void client_http_post(const *urlbuf, const char *urlbuf_varpart,const char *hoststr, const *additionalheaderline,char *postval,void (*callback)(uint16_t,uint16_t,uint16_t),uint8_t *dstip,uint8_t *dstmac)
 {
         if (!enc28j60linkup())return;
         client_urlbuf=urlbuf;

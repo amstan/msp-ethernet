@@ -13,9 +13,7 @@
 #ifndef IP_ARP_UDP_TCP_H
 #define IP_ARP_UDP_TCP_H 1
 #include "ip_config.h"
-// http://www.nongnu.org/avr-libc/changes-1.8.html:
 #define __PROG_TYPES_COMPAT__
-#include <avr/pgmspace.h>
 
 // set my own mac address:
 extern void init_mac(uint8_t *mymac); // not needed if you call init_udp_or_www_server
@@ -43,7 +41,6 @@ extern void make_udp_reply_from_request(uint8_t *buf,char *data,uint8_t datalen,
 // of the tcp data if there is tcp data part:
 extern uint16_t packetloop_arp_icmp_tcp(uint8_t *buf,uint16_t plen);
 // functions to fill the web pages with data:
-extern uint16_t fill_tcp_data_p(uint8_t *buf,uint16_t pos, const prog_char *progmem_s);
 extern uint16_t fill_tcp_data(uint8_t *buf,uint16_t pos, const char *s);
 // fill a binary string of len data into the tcp packet:
 extern uint16_t fill_tcp_data_len(uint8_t *buf,uint16_t pos, const uint8_t *s, uint8_t len);

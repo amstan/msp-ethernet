@@ -14,10 +14,8 @@
  * (without retry in case of failure) but there will be no
  * lease renewal.
  *********************************************/
-#include <avr/io.h>
 // http://www.nongnu.org/avr-libc/changes-1.8.html:
 #define __PROG_TYPES_COMPAT__
-#include <avr/pgmspace.h>
 #include <string.h>
 #include <stdlib.h>
 #include "net.h"

@@ -1,3 +1,6 @@
+#include <msp430.h>
+#include "bitop.h"
+
 void initio() {
 	#define LED 3
 	#define UEXTPWR 1

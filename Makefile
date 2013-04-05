@@ -11,8 +11,8 @@ FET = rf2500
 GDB = msp430-gdb
 GDBTUI = $(GDB)tui
 
-OBJS=$(PROG).o
-#OBJS+=stack/dhcp_client.o stack/dnslkup.o stack/enc28j60.o stack/ip_arp_udp_tcp.o stack/websrv_help_functions.o
+OBJS=$(PROG).o olimexino5510.o
+OBJS+=stack/enc28j60.o stack/dhcp_client.o stack/dnslkup.o stack/ip_arp_udp_tcp.o stack/websrv_help_functions.o
 
 all: $(PROG).elf  $(PROG).lst
 	$(SIZE) $(PROG).elf
@@ -23,7 +23,7 @@ $(PROG).elf: $(OBJS)
 	$(CC) $(CFLAGS) -o $(PROG).elf $(OBJS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $< -o $@
 
 %.lst: %.elf
 	$(OBJDUMP) -DS $< >$@

@@ -10,7 +10,6 @@
  * the right defines for your application in ip_config.h you can 
  * significantly reduce the size of the resulting code.
  *********************************************/
-#include <avr/io.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>

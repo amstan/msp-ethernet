@@ -12,63 +12,41 @@
  * Title: Microchip ENC28J60 Ethernet Interface Driver
  * Chip type           : ATMEGA88/ATMEGA168/ATMEGA328/ATMEGA644 with ENC28J60
  *********************************************/
-#include <avr/io.h>
 #include "enc28j60.h"
-#include "../msp.c"
+#include "../olimexino5510.h"
 
 
 static uint8_t Enc28j60Bank;
 static int16_t gNextPacketPtr;
-#define ENC28J60_CONTROL_PORT   PORTB
-#define ENC28J60_CONTROL_DDR    DDRB
-#if defined(__AVR_ATmega88__) || defined(__AVR_ATmega88P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) 
-#define ENC28J60_CONTROL_CS PORTB2
-#define ENC28J60_CONTROL_SO PORTB4
-#define ENC28J60_CONTROL_SI PORTB3
-#define ENC28J60_CONTROL_SCK PORTB5
-#endif
-#if defined(__AVR_ATmega644__)||defined(__AVR_ATmega644P__)
-#define ENC28J60_CONTROL_CS PORTB4
-#define ENC28J60_CONTROL_SO PORTB6
-#define ENC28J60_CONTROL_SI PORTB5
-#define ENC28J60_CONTROL_SCK PORTB7
-#endif
 // set CS to 0 = active
-#define CSACTIVE ENC28J60_CONTROL_PORT&=~(1<<ENC28J60_CONTROL_CS)
+#define CSACTIVE spi_enable(1)
 // set CS to 1 = passive
-#define CSPASSIVE ENC28J60_CONTROL_PORT|=(1<<ENC28J60_CONTROL_CS)
-//
-#define waitspi() while(!(SPSR&(1<<SPIF)))
+#define CSPASSIVE spi_enable(0)
 
 uint8_t enc28j60ReadOp(uint8_t op, uint8_t address)
 {
         CSACTIVE;
         // issue read command
-        SPDR = op | (address & ADDR_MASK);
-        waitspi();
+        spi_send_recieve(op | (address & ADDR_MASK));
         // read data
-        SPDR = 0x00;
-        waitspi();
+        unsigned char reply;
+        reply=spi_send_recieve(0x00);
         // do dummy read if needed (for mac and mii, see datasheet page 29)
         if(address & 0x80)
         {
-                SPDR = 0x00;
-                waitspi();
+                reply=spi_send_recieve(0x00);
         }
         // release CS
         CSPASSIVE;
-        return(SPDR);
+        return(reply);
 }
 
 void enc28j60WriteOp(uint8_t op, uint8_t address, uint8_t data)
 {
         CSACTIVE;
         // issue write command
-        SPDR = op | (address & ADDR_MASK);
-        waitspi();
-        // write data
-        SPDR = data;
-        waitspi();
+        spi_send_recieve(op | (address & ADDR_MASK));
+        spi_send_recieve(data);
         CSPASSIVE;
 }
 
@@ -76,15 +54,12 @@ void enc28j60ReadBuffer(uint16_t len, uint8_t* data)
 {
         CSACTIVE;
         // issue read command
-        SPDR = ENC28J60_READ_BUF_MEM;
-        waitspi();
+        spi_send_recieve(ENC28J60_READ_BUF_MEM);
         while(len)
         {
                 len--;
                 // read data
-                SPDR = 0x00;
-                waitspi();
-                *data = SPDR;
+                *data = spi_send_recieve(0x00);
                 data++;
         }
         *data='\0';
@@ -95,15 +70,13 @@ void enc28j60WriteBuffer(uint16_t len, uint8_t* data)
 {
         CSACTIVE;
         // issue write command
-        SPDR = ENC28J60_WRITE_BUF_MEM;
-        waitspi();
+        spi_send_recieve(ENC28J60_WRITE_BUF_MEM);
         while(len)
         {
                 len--;
                 // write data
-                SPDR = *data;
+                spi_send_recieve(*data);
                 data++;
-                waitspi();
         }
         CSPASSIVE;
 }
@@ -135,7 +108,7 @@ uint16_t enc28j60PhyReadH(uint8_t address)
 	// Set the right address and start the register read operation
 	enc28j60Write(MIREGADR, address);
 	enc28j60Write(MICMD, MICMD_MIIRD);
-        _delay_loop_1(40); // 10us
+        __delay_cycles(160); // 10us
 
 	// wait until the PHY read completes
 	while(enc28j60Read(MISTAT) & MISTAT_BUSY);
@@ -163,7 +136,7 @@ void enc28j60PhyWrite(uint8_t address, uint16_t data)
         enc28j60Write(MIWRH, data>>8);
         // wait until the PHY write completes
         while(enc28j60Read(MISTAT) & MISTAT_BUSY){
-                _delay_loop_1(40); // 10us
+                __delay_cycles(160); // 10us
         }
 }
 
@@ -175,24 +148,10 @@ void enc28j60clkout(uint8_t clk)
 
 void enc28j60Init(uint8_t* macaddr)
 {
-	// initialize I/O
-        // ss as output:
-	ENC28J60_CONTROL_DDR |= 1<<ENC28J60_CONTROL_CS;
-	CSPASSIVE; // ss=0
-        //	
-	ENC28J60_CONTROL_DDR  |= 1<<ENC28J60_CONTROL_SI | 1<<ENC28J60_CONTROL_SCK; // mosi, sck output
-	ENC28J60_CONTROL_DDR|= 1<<ENC28J60_CONTROL_SO; // MISO is input
-        //
-        ENC28J60_CONTROL_PORT|= 1<<ENC28J60_CONTROL_SI; // MOSI low
-        ENC28J60_CONTROL_PORT|= 1<<ENC28J60_CONTROL_SCK; // SCK low
-	//
-	// initialize SPI interface
-	// master mode and Fosc/2 clock:
-        SPCR = (1<<SPE)|(1<<MSTR);
-        SPSR |= (1<<SPI2X);
 	// perform system reset
 	enc28j60WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
-        _delay_loop_2(0); // 20ms
+        for(unsigned char i=0;i<20;i++)  // 20ms
+                __delay_cycles(16000);
 	// check CLKRDY bit to see if reset is complete
         // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
 	//while(!(enc28j60Read(ESTAT) & ESTAT_CLKRDY));

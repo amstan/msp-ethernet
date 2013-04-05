@@ -1,6 +1,6 @@
 #include <msp430.h>
 #include "bitop.h"
-#include "olimexino5510.c"
+#include "olimexino5510.h"
 
 #define MIREGADR 0x14
 #define MIWRL 0x16
@@ -17,7 +17,6 @@ int main(void)
 	
 	initio();
 	
-	unsigned char phase=0;
 	while(1) {
 		//clear_bit(PJOUT,LED);
 		unsigned on=switchpressed();
