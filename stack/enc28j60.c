@@ -108,7 +108,6 @@ uint16_t enc28j60PhyReadH(uint8_t address)
 	// Set the right address and start the register read operation
 	enc28j60Write(MIREGADR, address);
 	enc28j60Write(MICMD, MICMD_MIIRD);
-        __delay_cycles(160); // 10us
 
 	// wait until the PHY read completes
 	while(enc28j60Read(MISTAT) & MISTAT_BUSY);
@@ -135,9 +134,7 @@ void enc28j60PhyWrite(uint8_t address, uint16_t data)
         enc28j60Write(MIWRL, data);
         enc28j60Write(MIWRH, data>>8);
         // wait until the PHY write completes
-        while(enc28j60Read(MISTAT) & MISTAT_BUSY){
-                __delay_cycles(160); // 10us
-        }
+        while(enc28j60Read(MISTAT) & MISTAT_BUSY);
 }
 
 void enc28j60clkout(uint8_t clk)
