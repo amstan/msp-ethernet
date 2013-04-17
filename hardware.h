@@ -2,6 +2,11 @@
 #include <msp430.h>
 #include "bitop.h"
 
+#ifndef __MSP430F5510
+#error These core files are only compatible with the F5510 chip.
+#warning You probably want the olimexino5510 board for all the pins to be correct.
+#endif
+
 ///Stops watchdog timer
 void wtd_disable();
 

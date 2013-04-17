@@ -63,13 +63,6 @@ void httpServer(void) {
 			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
 			pos=tgPageAdd(buf,pos,index_html);
 		}
-		else if_page("/test ") {
-			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
-			for(unsigned int i=0;i<index_html_len;i++) {
-				pgprintf("%c",index_html[i]);
-			}
-			//pos=tgPageAdd(buf,pos,index_html+0);
-		}
 		else if_page("/ledon ") {
 			set_bit(P_OUT(LED_P),LED);
 			pos=tgPageAdd(buf,0,HTTP_RESP_REDIRECT);
@@ -90,7 +83,6 @@ void httpServer(void) {
 			//404
 			pos=tgPageAdd(buf,0,HTTP_RESP_NOT_FOUND);
 			pos=tgPageAdd(buf,pos,HTML_RESP_NOT_FOUND);
-			pos=tgPageAdd(buf,pos,"<a href=\"/\">Back to main page</a>");
 		}
 		
 		tgHttpReply(buf,pos);

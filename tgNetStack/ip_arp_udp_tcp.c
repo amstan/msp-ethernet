@@ -409,7 +409,7 @@ uint16_t get_tcp_data_len(uint8_t *buf)
 }
 
 // fill a binary string of len data into the tcp packet
-uint16_t fill_tcp_data_len(uint8_t *buf,uint16_t pos, const char *s, uint8_t len)
+uint16_t fill_tcp_data_len(uint8_t *buf,uint16_t pos, const uint8_t *s, uint16_t len)
 {
         // fill in tcp data at position pos
         //
