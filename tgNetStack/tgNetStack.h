@@ -23,9 +23,12 @@
 }
 
 const char *HTTP_RESP_OK = "HTTP/1.0 200 OK\nContent­Type: text/html\nPragma: no­cache\n\n";
-const char *HTTP_RESP_UNAUTH = "HTTP/1.0 401 UA\n\n";
+//const char *HTTP_RESP_UNAUTH = "HTTP/1.0 401 UA\n\n";
 const char *HTTP_RESP_NOT_FOUND = "HTTP/1.0 404 NF\n\n";
 const char *HTTP_RESP_REDIRECT = "HTTP/1.0 302 Found\nLocation: /";
+const char *HTTP_AUTHENTICATE = "HTTP/1.0 401 Access Denied\r\nWWW-Authenticate: Basic\r\nContent-Length: 0\r\n\r\n";
+
+
 const char *HTML_RESP_OK = "200 OK\n\n";
 const char *HTML_RESP_UNAUTH = "401 Unauthorized Access\n\n";
 const char *HTML_RESP_NOT_FOUND = "404 Page Not Found\n\n";
@@ -35,7 +38,6 @@ const char *HTML_REFRESH_HEADER = "<!DOCTYPE html>"
 "<meta http-equiv=\"refresh\" content=\"1\">"
 "</head>"
 "<body>";
-
 const char *HTML_FOOTER="</body></html>";
 
 #define tgHttpReply(a,b) www_server_reply(a,b)
