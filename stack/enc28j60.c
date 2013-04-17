@@ -13,7 +13,7 @@
  * Chip type           : ATMEGA88/ATMEGA168/ATMEGA328/ATMEGA644 with ENC28J60
  *********************************************/
 #include "enc28j60.h"
-#include "../olimexino5510.h"
+#include "../spi.h"
 
 
 static uint8_t Enc28j60Bank;

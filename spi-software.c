@@ -1,22 +1,10 @@
-#include <msp430.h>
-#include "bitop.h"
+#include "spi.h"
 
-void initio() {
-	#define LED 3
-	#define UEXTPWR 1
-	#define CS 0
-	PJDIR=(1<<LED)|(1<<UEXTPWR)|(1<<CS);
-	PJOUT=(0<<UEXTPWR)|(1<<CS);
-	
+void spi_init(unsigned int clocksettings) {
 	#define CLOCK 3
 	#define DOUT 1
 	#define DIN 2
 	P4DIR=(1<<CLOCK)|(1<<DOUT);
-	
-	#define BUTTON 0
-	P2OUT=(1<<BUTTON);
-	P2REN=(1<<BUTTON);
-	#define switchpressed() (!test_bit(P2IN,BUTTON))
 }
 
 //Enables spi communication, 1 for start, 0 for stop

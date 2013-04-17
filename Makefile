@@ -1,26 +1,30 @@
-# Makefile created by gnomad
+TARGET = stackdemo
+CPU=msp430f5510
+SRCS=$(TARGET).c
+FET = rf2500
 
-PROG = main
-CC = msp430-gcc -g
-CXX = msp430-g++
+CC = msp430-gcc
 OBJDUMP = msp430-objdump
 SIZE = msp430-size
 MSPDEBUG = mspdebug
-CFLAGS = --std=c99 -Os -Wall -mmcu=msp430f5510
-FET = rf2500
+CFLAGS = -std=gnu99 -Os -Wall -mmcu=$(CPU)
 GDB = msp430-gdb
-GDBTUI = $(GDB)tui
 
-OBJS=$(PROG).o olimexino5510.o
-OBJS+=stack/enc28j60.o stack/dhcp_client.o stack/dnslkup.o stack/ip_arp_udp_tcp.o stack/websrv_help_functions.o
+SRCS+=hardware.c spi.c
+SRCS+=stack/enc28j60.c stack/dhcp_client.c stack/dnslkup.c stack/ip_arp_udp_tcp.c stack/websrv_help_functions.c
 
-all: $(PROG).elf  $(PROG).lst
-	$(SIZE) $(PROG).elf
+# Uncomment the following to enable debugging
+#CFLAGS += -g -DDEBUG
+
+OBJS=$(SRCS:.c=.o)
+
+all: $(TARGET).elf  $(TARGET).lst
+	$(SIZE) $(TARGET).elf
 
 .PHONY: all
 
-$(PROG).elf: $(OBJS)
-	$(CC) $(CFLAGS) -o $(PROG).elf $(OBJS)
+$(TARGET).elf: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET).elf $(OBJS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -29,22 +33,16 @@ $(PROG).elf: $(OBJS)
 	$(OBJDUMP) -DS $< >$@
 
 clean:
-	rm -fr $(PROG).elf $(PROG).lst $(OBJS)
+	rm -fr $(TARGET).elf $(TARGET).lst $(OBJS)
 
-install: $(PROG).elf
-	$(MSPDEBUG) $(FET) "prog $(PROG).elf"
+install: $(TARGET).elf
+	$(MSPDEBUG) $(FET) "prog $(TARGET).elf"
 
-mspdebug: $(PROG).elf
+mspdebug: $(TARGET).elf
 	$(MSPDEBUG) $(FET)
 
-debug: $(PROG).elf
+debug: $(TARGET).elf
 	$(MSPDEBUG) $(FET) gdb
 
-gdb: $(PROG).elf
-	$(GDB) $(PROG).elf
- 
-tui: $(PROG).elf
-	$(GDBTUI) $(PROG).elf
- 
-ddd: $(PROG).elf
-	ddd --debugger $(GDB) $(PROG).elf
+gdb: $(TARGET).elf
+	$(GDB) $(TARGET).elf
