@@ -14,7 +14,7 @@ void (*system_tick)(void);
 
 ///Time Struct
 typedef struct {
-	unsigned int hours;
+	unsigned long hours;
 	unsigned char minutes;
 	unsigned char seconds;
 } time_t;

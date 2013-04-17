@@ -44,7 +44,7 @@ void io_init() {
 	set_bit(P_REN(BUTTON_P),BUTTON);
 }
 
-core_frequency_set(unsigned long int frequency) {
+void core_frequency_set(unsigned long int frequency) {
 	///Set multiplier based on the slow xtal
 	UCSCTL3 |= SELREF_2;
 	UCSCTL4 |= SELA_2;

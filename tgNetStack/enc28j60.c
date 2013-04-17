@@ -147,8 +147,8 @@ void enc28j60Init(uint8_t* macaddr)
 {
 	// perform system reset
 	enc28j60WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
-        for(unsigned char i=0;i<20;i++)  // 20ms
-                __delay_cycles(16000);
+        for(unsigned char i=0;i<10;i++)
+                __delay_cycles(10000);
 	// check CLKRDY bit to see if reset is complete
         // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
 	//while(!(enc28j60Read(ESTAT) & ESTAT_CLKRDY));

@@ -3,21 +3,26 @@ CPU=msp430f5510
 SRCS=$(TARGET).c
 FET = rf2500
 FCPU=8000000
+HTMLs=index.html led.html
 
 CC = msp430-gcc
 OBJDUMP = msp430-objdump
 SIZE = msp430-size
 MSPDEBUG = mspdebug
-CFLAGS = -std=gnu99 -Os -Wall -mmcu=$(CPU) -DFCPU=$(FCPU)
+CFLAGS = -std=gnu99 -O2 -Wall -mmcu=$(CPU) -DFCPU=$(FCPU)
 GDB = msp430-gdb
 
+#add hardware stuff
 SRCS+=hardware.c spi.c
-SRCS+=stack/enc28j60.c stack/dhcp_client.c stack/dnslkup.c stack/ip_arp_udp_tcp.c stack/websrv_help_functions.c
+
+#add ethernet stack
+SRCS+=tgNetStack/enc28j60.c tgNetStack/dhcp_client.c tgNetStack/dnslkup.c tgNetStack/ip_arp_udp_tcp.c tgNetStack/websrv_help_functions.c
 
 # Uncomment the following to enable debugging
 #CFLAGS += -g -DDEBUG
 
 OBJS=$(SRCS:.c=.o)
+OBJS+=html.h
 
 all: $(TARGET).elf  $(TARGET).lst
 	$(SIZE) $(TARGET).elf
@@ -36,7 +41,7 @@ $(TARGET).elf: $(OBJS)
 clean:
 	rm -fr $(TARGET).elf $(TARGET).lst $(OBJS)
 
-install: $(TARGET).elf
+install: all
 	$(MSPDEBUG) $(FET) "prog $(TARGET).elf"
 
 mspdebug: $(TARGET).elf
@@ -47,3 +52,8 @@ debug: $(TARGET).elf
 
 gdb: $(TARGET).elf
 	$(GDB) $(TARGET).elf
+
+html.h: $(HTMLs)
+	./generatehtmlheader.py $(HTMLs)>html.h
+
+$(TARGET).c: html.h
