@@ -45,14 +45,6 @@ void httpServer(void) {
 		
 		hitcounter++;
 		
-		//if not authorized
-// 		if(strstr((const char *)buf,AUTH)==0) {
-// 			//Send the auth request
-// 			pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
-// 			tgHttpReply(buf,pos);
-// 			continue;
-// 		}
-// 		
 		#define if_page(name) if(strncmp(name, (char *) &buf[pos + 4], strlen(name))==0)
 		
 		if_page("/uptime ") {
@@ -70,6 +62,8 @@ void httpServer(void) {
 		else if_page("/ ") {
 			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
 			pos=tgPageAdd(buf,pos,index_html);
+			pos=tgPageAdd(buf,pos,AUTH);
+			pgprintf("True: %d",strstr((const char *)buf,"AppleWebKit"));
 		}
 		else if_page("/ledon ") {
 			set_bit(P_OUT(LED_P),LED);
@@ -86,6 +80,15 @@ void httpServer(void) {
 		else if_page("/blinkoff ") {
 			system_tick=0;
 			pos=tgPageAdd(buf,0,HTTP_RESP_REDIRECT);
+		}
+		else if_page("/auth ") {
+			//if not authorized
+			if(strstr(buf,AUTH)) {
+				//Send the auth request
+				pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
+				tgHttpReply(buf,pos);
+				continue;
+			}
 		}
 		else {
 			//404
