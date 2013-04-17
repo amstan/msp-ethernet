@@ -5,7 +5,7 @@ for filename in sys.argv[1:]:
 	data=open(filename).read()
 	data+="\0"
 	
-	filename=filename.replace(".","_")
+	filename=filename.split("/")[-1].replace(".","_")
 	
 	print "unsigned int %s_len = %d;" % (filename,len(data))
 	print "char %s[] = {" % (filename)

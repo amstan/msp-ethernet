@@ -3,8 +3,8 @@ CPU=msp430f5510
 SRCS=$(TARGET).c
 FET = rf2500
 FCPU=8000000
-HTMLs=index.html
-AUTH=alex:pass
+HTMLs=html/menu.html html/back.html html/status.html html/led.html html/freq.html html/index.html
+AUTH=finalexam:elec10053
 
 AUTHSTRING=$(shell python2 -c 'import base64; print base64.b64encode("$(AUTH)")')
 CC = msp430-gcc

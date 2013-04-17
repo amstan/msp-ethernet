@@ -38,7 +38,7 @@ const char *HTML_REFRESH_HEADER = "<!DOCTYPE html>"
 "<meta http-equiv=\"refresh\" content=\"1\">"
 "</head>"
 "<body>";
-const char *HTML_FOOTER="</body></html>";
+const char *HTML_FOOTER="<hr /></body></html>";
 
 #define tgHttpReply(a,b) www_server_reply(a,b)
 #define tgPageAdd(a,b,c) fill_tcp_data(a,b,c)
