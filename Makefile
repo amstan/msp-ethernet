@@ -4,12 +4,14 @@ SRCS=$(TARGET).c
 FET = rf2500
 FCPU=8000000
 HTMLs=index.html
+AUTH=alex:pass
 
+AUTHSTRING=$(shell python2 -c 'import base64; print base64.b64encode("$(AUTH)")')
 CC = msp430-gcc
 OBJDUMP = msp430-objdump
 SIZE = msp430-size
 MSPDEBUG = mspdebug
-CFLAGS = -std=gnu99 -O2 -Wall -mmcu=$(CPU) -DFCPU=$(FCPU)
+CFLAGS = -std=gnu99 -O2 -Wall -mmcu=$(CPU) -DFCPU=$(FCPU) -DAUTH=\"$(AUTHSTRING)\"
 GDB = msp430-gdb
 
 #add hardware stuff
@@ -57,3 +59,6 @@ html.h: $(HTMLs)
 	./generatehtmlheader.py $(HTMLs)>html.h
 
 $(TARGET).c: html.h
+
+test:
+	echo $(AUTHSTRING)

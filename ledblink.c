@@ -45,6 +45,14 @@ void httpServer(void) {
 		
 		hitcounter++;
 		
+		//if not authorized
+// 		if(strstr((const char *)buf,AUTH)==0) {
+// 			//Send the auth request
+// 			pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
+// 			tgHttpReply(buf,pos);
+// 			continue;
+// 		}
+// 		
 		#define if_page(name) if(strncmp(name, (char *) &buf[pos + 4], strlen(name))==0)
 		
 		if_page("/uptime ") {
