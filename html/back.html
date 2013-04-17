@@ -1,5 +1,12 @@
 <html>
-<body onload="window.history.go(-1);"> <!--Sadly this only works in chrome, firefox has to click the link-->
-<a href="window.history.go(-1);">Go Back</a>
+<head>
+<script>
+function goback() { /*This is required because firefox doesn't play nice with go back onload*/
+	window.history.go(-1);
+}
+</script>
+</head>
+<body onLoad="setTimeout('goback()', 10)">
+<a href="javascript:goback();">Go Back</a>
 </body>
 </html>

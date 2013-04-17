@@ -3,7 +3,8 @@ CPU=msp430f5510
 SRCS=$(TARGET).c
 FET = rf2500
 FCPU=8000000
-HTMLs=html/menu.html html/back.html html/status.html html/led.html html/freq.html html/index.html
+HTMLs=html/menu.html html/back.html html/status.html html/led.html html/freq.html html/index.html html/rev.html
+HTMLs+=html/smallmenu.html html/start.html html/loginrequired.html
 AUTH=finalexam:elec10053
 
 AUTHSTRING=$(shell python2 -c 'import base64; print base64.b64encode("$(AUTH)")')
@@ -11,7 +12,7 @@ CC = msp430-gcc
 OBJDUMP = msp430-objdump
 SIZE = msp430-size
 MSPDEBUG = mspdebug
-CFLAGS = -std=gnu99 -O2 -Wall -mmcu=$(CPU) -DFCPU=$(FCPU) -DAUTH=\"$(AUTHSTRING)\"
+CFLAGS = -std=gnu99 -Os -Wall -mmcu=$(CPU) -DFCPU=$(FCPU) -DAUTH=\"$(AUTHSTRING)\"
 GDB = msp430-gdb
 
 #add hardware stuff

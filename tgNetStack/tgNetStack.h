@@ -26,7 +26,7 @@ const char *HTTP_RESP_OK = "HTTP/1.0 200 OK\nContent­Type: text/html\nPragma: n
 //const char *HTTP_RESP_UNAUTH = "HTTP/1.0 401 UA\n\n";
 const char *HTTP_RESP_NOT_FOUND = "HTTP/1.0 404 NF\n\n";
 const char *HTTP_RESP_REDIRECT = "HTTP/1.0 302 Found\nLocation: /";
-const char *HTTP_AUTHENTICATE = "HTTP/1.0 401 Access Denied\r\nWWW-Authenticate: Basic\r\nContent-Length: 0\r\n\r\n";
+const char *HTTP_AUTHENTICATE = "HTTP/1.0 401 Access Denied\nWWW-Authenticate: Basic\nContent-Length: 0\n\n";
 
 
 const char *HTML_RESP_OK = "200 OK\n\n";
@@ -43,3 +43,4 @@ const char *HTML_FOOTER="<hr /></body></html>";
 #define tgHttpReply(a,b) www_server_reply(a,b)
 #define tgPageAdd(a,b,c) fill_tcp_data(a,b,c)
 #define tgPacketGet(a,b) packetloop_arp_icmp_tcp(a, enc28j60PacketReceive(b, a))
+#define tgGetRev() enc28j60getrev()

@@ -14,7 +14,7 @@ static uint8_t buf[TG_BUFFER_SIZE+1];
 void blinkled(void) {
 	toggle_bit(P_OUT(LED_P),LED);
 }
-void (*system_tick)(void)=0; //disable blinking by default
+void (*system_tick)(void)=*blinkled;
 
 unsigned char is_valid_auth(uint8_t *buf, char *auth) {
 	char *authstart=auth;
@@ -68,42 +68,51 @@ void final(void) {
 			tgHttpReply(buf, pos);
 			continue;
 		}
+		#define is_page(name) (strncmp(name, (char *) &buf[pos + 4], strlen(name))==0)
+		#define BACKPAGE {pos=tgPageAdd(buf,0,HTTP_RESP_OK); pos=tgPageAdd(buf,pos,back_html);}
 		
 		hitcounter++;
 		
 		//if not authorized
 		if(!is_valid_auth(buf,AUTH)) {
-			//Send the auth request
-			pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
+			if(is_page("/ ")) {
+				//Start page with login button
+				pos=tgPageAdd(buf,0,HTTP_RESP_OK);
+				pos=tgPageAdd(buf,pos,smallmenu_html);
+				pos=tgPageAdd(buf,pos,start_html);
+				pos=tgPageAdd(buf,pos,HTML_FOOTER);
+			} else {
+				if(is_page("/login ")) {
+					//Send the auth request
+					pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
+				} else {
+					//Show login required error and redirect to homepage
+					pos=tgPageAdd(buf,0,HTTP_RESP_OK);
+					pos=tgPageAdd(buf,pos,smallmenu_html);
+					pos=tgPageAdd(buf,pos,loginrequired_html);
+					pos=tgPageAdd(buf,pos,HTML_FOOTER);
+				}
+			}
 			tgHttpReply(buf,pos);
 			continue;
 		}
 		
-		#define is_page(name) (strncmp(name, (char *) &buf[pos + 4], strlen(name))==0)
-		#define BACKPAGE {pos=tgPageAdd(buf,0,HTTP_RESP_OK); pos=tgPageAdd(buf,pos,back_html);}
-		
-		if(is_page("/uptime ")) {
-			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
-			pos=tgPageAdd(buf,pos,HTML_REFRESH_HEADER);
-			pgprintf("Uptime: %ldh %dm %ds",uptime.hours, uptime.minutes, uptime.seconds);
-			pos=tgPageAdd(buf,pos,HTML_FOOTER);
-		}
-		else if(is_page("/hitcounter ")) {
-			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
-			pos=tgPageAdd(buf,pos,HTML_REFRESH_HEADER);
-			pgprintf("Hits: %ld<br />", hitcounter);
-			pgprintf("Button Presses: %d<br />", button_presses);
-			pos=tgPageAdd(buf,pos,HTML_FOOTER);
-		}
-		else if(is_page("/ ")) {
-			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
-			pos=tgPageAdd(buf,pos,index_html);
-		}
-		else if(is_page("/logout ")) {
+		//Giant if statment, the elses are required so the last one does the 404
+		if(is_page("/logout ")) {
 			//Send the auth request to confuse browser into deleting the session
 			pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
 			tgHttpReply(buf,pos);
 			continue;
+		}
+		else if(is_page("/login ")) {
+			BACKPAGE;
+		}
+		
+		else if(is_page("/ ")) {
+			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
+			pos=tgPageAdd(buf,pos,menu_html);
+			pos=tgPageAdd(buf,pos,index_html);
+			pos=tgPageAdd(buf,pos,HTML_FOOTER);
 		}
 		
 		else if(is_page("/status ")) {
@@ -142,17 +151,24 @@ void final(void) {
 			pgprintf(freq_html,frequencynames[frequency]);
 			pos=tgPageAdd(buf,pos,HTML_FOOTER);
 		}
-		else if(is_page("/frequp")) {
+		else if(is_page("/frequp ")) {
 			frequency++;
 			frequency%=6;
 			enc28j60clkout(frequency);
 			BACKPAGE;
 		}
-		else if(is_page("/freqdown")) {
+		else if(is_page("/freqdown ")) {
 			frequency--;
 			frequency%=6;
 			enc28j60clkout(frequency);
 			BACKPAGE;
+		}
+		
+		else if(is_page("/rev ")) {
+			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
+			pos=tgPageAdd(buf,pos,menu_html);
+			pgprintf(rev_html,tgGetRev());
+			pos=tgPageAdd(buf,pos,HTML_FOOTER);
 		}
 		
 		else {
