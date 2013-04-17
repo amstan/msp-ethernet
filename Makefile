@@ -3,7 +3,7 @@ CPU=msp430f5510
 SRCS=$(TARGET).c
 FET = rf2500
 FCPU=8000000
-HTMLs=index.html led.html
+HTMLs=index.html
 
 CC = msp430-gcc
 OBJDUMP = msp430-objdump
@@ -19,7 +19,7 @@ SRCS+=hardware.c spi.c
 SRCS+=tgNetStack/enc28j60.c tgNetStack/dhcp_client.c tgNetStack/dnslkup.c tgNetStack/ip_arp_udp_tcp.c tgNetStack/websrv_help_functions.c
 
 # Uncomment the following to enable debugging
-#CFLAGS += -g -DDEBUG
+CFLAGS += -g -DDEBUG
 
 OBJS=$(SRCS:.c=.o)
 OBJS+=html.h
