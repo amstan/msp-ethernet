@@ -14,7 +14,23 @@ static uint8_t buf[TG_BUFFER_SIZE+1];
 void blinkled(void) {
 	toggle_bit(P_OUT(LED_P),LED);
 }
-void (*system_tick)(void)=*blinkled;
+void (*system_tick)(void)=0; //disable blinking by default
+
+unsigned char is_valid_auth(uint8_t *buf, char *auth) {
+	char *authstart=auth;
+	for(unsigned int i=0;i<500;i++) {
+		if(*buf++==(uint8_t)*auth) {
+			//continue checking
+			auth++;
+		} else {
+			//go back from scratch
+			auth=authstart;
+		}
+		if(*auth=='\0')
+			return 1;
+	}
+	return 0;
+}
 
 void httpServer(void) {
 	//Prepare spi for the ethernet chip
@@ -45,6 +61,16 @@ void httpServer(void) {
 		
 		hitcounter++;
 		
+		//if not authorized
+		if(!is_valid_auth(buf,AUTH)) {
+			//Send the auth request
+			pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
+			tgHttpReply(buf,pos);
+			continue;
+		}
+		
+		//change_bit(P_OUT(LED_P),LED,strstr(buf,"AppeWebKit")!=0);
+		
 		#define if_page(name) if(strncmp(name, (char *) &buf[pos + 4], strlen(name))==0)
 		
 		if_page("/uptime ") {
@@ -62,8 +88,12 @@ void httpServer(void) {
 		else if_page("/ ") {
 			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
 			pos=tgPageAdd(buf,pos,index_html);
-			pos=tgPageAdd(buf,pos,AUTH);
-			pgprintf("True: %d",strstr((const char *)buf,"AppleWebKit"));
+		}
+		else if_page("/logout ") {
+			//Send the auth request to confuse browser into deleting the session
+			pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
+			tgHttpReply(buf,pos);
+			continue;
 		}
 		else if_page("/ledon ") {
 			set_bit(P_OUT(LED_P),LED);
@@ -80,15 +110,6 @@ void httpServer(void) {
 		else if_page("/blinkoff ") {
 			system_tick=0;
 			pos=tgPageAdd(buf,0,HTTP_RESP_REDIRECT);
-		}
-		else if_page("/auth ") {
-			//if not authorized
-			if(strstr(buf,AUTH)) {
-				//Send the auth request
-				pos=tgPageAdd(buf,0,HTTP_AUTHENTICATE);
-				tgHttpReply(buf,pos);
-				continue;
-			}
 		}
 		else {
 			//404
