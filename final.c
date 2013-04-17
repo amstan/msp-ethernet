@@ -16,12 +16,19 @@ void blinkled(void) {
 }
 void (*system_tick)(void)=*blinkled;
 
-void httpServer(void) {
+volatile unsigned char button_presses=0;
+void increment_button_presses(void) {
+	button_presses++;
+	button_presses%=10;
+}
+void (*button_down)(void)=*increment_button_presses;
+
+void final(void) {
 	//Prepare spi for the ethernet chip
 	spi_init(UCCKPL*0+UCCKPH*1); //Clock idle in a low state, data on rising edge
 	
 	uint8_t MAC_ADDR[6] = {0x00,0xDE,0xAD,0xBE,0xEF,0x00};
-	uint8_t IP[4] = {192,168,0,2};
+	uint8_t IP[4] = {192,168,0,55};
 	tgNetStackInit(MAC_ADDR,IP);
 	
 	#define pgprintf(...) {sprintf(buffer,__VA_ARGS__); pos=tgPageAdd(buf, pos, buffer);}
@@ -56,7 +63,8 @@ void httpServer(void) {
 		else if_page("/hitcounter ") {
 			pos=tgPageAdd(buf,0,HTTP_RESP_OK);
 			pos=tgPageAdd(buf,pos,HTML_REFRESH_HEADER);
-			pgprintf("Hits: %ld", hitcounter);
+			pgprintf("Hits: %ld<br />", hitcounter);
+			pgprintf("Button Presses: %d<br />", button_presses);
 			pos=tgPageAdd(buf,pos,HTML_FOOTER);
 		}
 		else if_page("/ ") {
@@ -88,4 +96,4 @@ void httpServer(void) {
 		tgHttpReply(buf,pos);
 	}
 }
-void (*app_entry_point)(void)=*httpServer;
+void (*app_entry_point)(void)=*final;

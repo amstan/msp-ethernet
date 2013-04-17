@@ -17,6 +17,9 @@ void (*app_entry_point)(void);
 ///Executes every second
 void (*system_tick)(void);
 
+///Event when the button is pressed
+void (*button_down)(void);
+
 ///Time Struct
 typedef struct {
 	unsigned long hours;
@@ -34,6 +37,9 @@ extern time_t uptime;
 #define P_REN(PORT)  CONCATENATE(PORT, REN)
 #define P_SEL(PORT)  CONCATENATE(PORT, SEL)
 #define P_SEL2(PORT) CONCATENATE(PORT, SEL2)
+#define P_IE(PORT)   CONCATENATE(PORT, IE)
+#define P_IES(PORT)  CONCATENATE(PORT, IES)
+#define P_IFG(PORT)  CONCATENATE(PORT, IFG)
 
 //Olimexino5510 specific stuff
 #define LED_P PJ

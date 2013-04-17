@@ -1,4 +1,4 @@
-TARGET = ledblink
+TARGET = final
 CPU=msp430f5510
 SRCS=$(TARGET).c
 FET = rf2500

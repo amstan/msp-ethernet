@@ -42,6 +42,19 @@ void io_init() {
 	clear_bit(P_DIR(BUTTON_P),BUTTON);
 	set_bit(P_OUT(BUTTON_P),BUTTON);
 	set_bit(P_REN(BUTTON_P),BUTTON);
+	
+	//button interrupt
+	clear_bit(P_IFG(BUTTON_P),BUTTON); //reset any pending interrupts
+	set_bit(P_IES(BUTTON_P),BUTTON); //push-down edge
+	set_bit(P_IE(BUTTON_P),BUTTON); //enable interrupt
+}
+
+#pragma vector=PORT2_VECTOR
+__interrupt void button_interrupt(void) {
+	clear_bit(P_IFG(BUTTON_P),BUTTON); //reset any pending interrupts
+	if(button_down) {
+		button_down();
+	}
 }
 
 void core_frequency_set(unsigned long int frequency) {
