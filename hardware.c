@@ -44,9 +44,20 @@ void io_init() {
 	set_bit(P_REN(BUTTON_P),BUTTON);
 }
 
+core_frequency_set(unsigned long int frequency) {
+	///Set multiplier based on the slow xtal
+	UCSCTL3 |= SELREF_2;
+	UCSCTL4 |= SELA_2;
+	UCSCTL0 = 0x0000;
+	UCSCTL1 = DCORSEL_5;
+	UCSCTL2 = FLLD_1 + (frequency/32768)-1;
+}
+
 int main(void) {
 	//start watchdog for uptime counting
 	wtd_interrupt_setup(WDT_ARST_1000); //auxiliary 32kHz xtal divided to 1Hz
+	
+	core_frequency_set(FCPU);
 	
 	io_init();
 	

@@ -2,12 +2,13 @@ TARGET = stackdemo
 CPU=msp430f5510
 SRCS=$(TARGET).c
 FET = rf2500
+FCPU=8000000
 
 CC = msp430-gcc
 OBJDUMP = msp430-objdump
 SIZE = msp430-size
 MSPDEBUG = mspdebug
-CFLAGS = -std=gnu99 -Os -Wall -mmcu=$(CPU)
+CFLAGS = -std=gnu99 -Os -Wall -mmcu=$(CPU) -DFCPU=$(FCPU)
 GDB = msp430-gdb
 
 SRCS+=hardware.c spi.c

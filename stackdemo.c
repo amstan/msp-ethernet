@@ -32,6 +32,11 @@ uint16_t print_webpage(uint8_t *buf)
 	plen=http200ok();
 	plen=fill_tcp_data(buf,plen,"<pre>");
 	plen=fill_tcp_data(buf,plen,"Hi!\nYour web server works great.");
+	
+	char data[100];
+	sprintf(data,"%d %d %d",uptime.hours,uptime.minutes,uptime.seconds);
+	
+	plen=fill_tcp_data(buf,plen,data);
 	plen=fill_tcp_data(buf,plen,"</pre>\n");
 	return(plen);
 }
@@ -48,7 +53,7 @@ void stackdemo(void) {
 	//initialize the hardware driver for the enc28j60
 	enc28j60Init(mymac);
 	enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
-	__delay_cycles(160*6); // 60us
+	__delay_cycles(500);
 	enc28j60PhyWrite(PHLCON,0x476);
 	
 	//init the ethernet/ip layer:
