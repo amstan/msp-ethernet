@@ -5,7 +5,7 @@ FET = rf2500
 FCPU=8000000
 HTMLs=html/menu.html html/back.html html/status.html html/led.html html/freq.html html/index.html html/rev.html
 HTMLs+=html/smallmenu.html html/start.html html/loginrequired.html
-AUTH=finalexam:elec10053
+AUTH=user:password
 
 AUTHSTRING=$(shell python2 -c 'import base64; print base64.b64encode("$(AUTH)")')
 CC = msp430-gcc
